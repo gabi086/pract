@@ -1,0 +1,306 @@
+Задание 4
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using ConsoleApp11;
+
+namespace UnitTestProject4
+{
+    [TestClass]
+    public class CalculatorTests
+    {
+        private Calculator calculator;
+
+        [TestInitialize]
+        public void Setup()
+        {
+            calculator = new Calculator();
+        }
+
+        [TestMethod]
+        public void Add_PositiveNumbers_ReturnsSum()
+        {
+            int result = calculator.Add(5, 10);
+            Assert.AreEqual(15, result);
+        }
+
+        [TestMethod]
+        public void Add_NegativeNumbers_ReturnsSum()
+        {
+            int result = calculator.Add(-5, -10);
+            Assert.AreEqual(-15, result);
+        }
+
+        [TestMethod]
+        public void Add_Zero_ReturnsSameNumber()
+        {
+            int result1 = calculator.Add(0, 5);
+            Assert.AreEqual(5, result1);
+
+            int result2 = calculator.Add(5, 0);
+            Assert.AreEqual(5, result2);
+        }
+    }
+}
+
+Задание 5 Напишите тест для метода Divide(int a, int b), который выбрасывает исключение DivideByZeroException, если b равен нулю. Проверьте, что исключение действительно выбрасывается.
+namespace TestProject1
+{
+    public class Tests
+    {
+        private Calculator _calculator;
+
+        [SetUp]
+        public void Setup()
+        {
+            _calculator = new Calculator();
+        }
+        [Test]
+        public void Test1()
+        {
+            int a = 10;
+            int b = 0;
+            var ex = Assert.Throws<DivideByZeroException>(() => _calculator.Divide(a, b));
+            Assert.That(ex.Message, Is.EqualTo("Cannot divide by zero"));
+        }
+    }
+}
+
+Задание 6 Создайте параметризованный тест для метода IsEven(int number), который проверяет, является ли число четным. Используйте атрибут [DataTestMethod] и [DataRow] для передачи различных входных данных.
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using ConsoleApp12;
+
+namespace UnitTestProject5
+{
+    [TestClass]
+    public class CalculatorTests
+    {
+        [DataTestMethod]
+        [DataRow(2, true)]   // Четное число
+        [DataRow(3, false)]  // Нечетное число
+        [DataRow(0, true)]   // Ноль - четное число
+        [DataRow(-2, true)]  // Отрицательное четное число
+        [DataRow(-3, false)] // Отрицательное нечетное число
+        public void IsEven_Test(int number, bool expected)
+        {
+            bool result = Calculator.IsEven(number);
+            Assert.AreEqual(expected, result);
+        }
+    }
+}
+Задание7 Напишите тест для метода Factorial(int n), который вычисляет факториал числа. Проверьте корректность работы метода для различных входных данных, включая граничные случаи.
+using NUnit.Framework;
+using System;
+
+namespace TestProject1
+{
+    public class Tests
+    {
+        private Numbers numbers;
+
+        [SetUp]
+        public void Setup()
+        {
+            numbers = new Numbers();
+        }
+
+        [Test]
+        public void Factorial_OfZero_ReturnsOne()
+        {
+            Assert.AreEqual(1, numbers.Factorial(0));
+        }
+
+        [Test]
+        public void Factorial_OfTwo_ReturnsTwo()
+        {
+            Assert.AreEqual(2, numbers.Factorial(2));
+        }
+
+        [Test]
+        public void Factorial_OfNegativeNumber_ThrowsArgumentException()
+        {
+            Assert.Throws<ArgumentException>(() => numbers.Factorial(-1));
+        }
+    }
+}
+Задание 8. для метода IsPalindrome(string text)
+using Xunit;
+
+namespace TestProject1
+{
+    public class StringUtilsTests
+    {
+        private readonly StringUtils _stringUtils;
+
+        public StringUtilsTests()
+        {
+            _stringUtils = new StringUtils();
+        }
+        [Theory]
+        [InlineData("Шалаш", true)]
+        [InlineData("Hello, World!", false)]
+        [InlineData("12321", true)]
+        [InlineData("12345", false)]
+        [InlineData("", false)]
+        public void IsPalindrome_ShouldReturnExpectedResult(string input, bool expected)
+        {
+            var result = _stringUtils.IsPalindrome(input);
+            Assert.Equal(expected, result);
+        }
+    }
+}
+
+
+Лед
+1 зад генерируется случайное целое число
+using System;
+
+public class GuessingGame
+{
+    public static void Main(string[] args)
+    {
+        Random random = new Random();
+        int secretNumber = random.Next(1, 11);
+        bool playAgain = true;
+
+        Console.WriteLine("Угадай число от 1 до 10");
+
+        while (playAgain)
+        {
+            Console.Write("Твой вариант: ");
+            int guess = int.Parse(Console.ReadLine());
+
+            if (guess == secretNumber)
+            {
+                Console.WriteLine("Поздравляю! Ты угадал!");
+                playAgain = false;
+            }
+            else
+            {
+                Console.WriteLine("Не угадал.");
+                Console.Write("Хочешь попробовать еще раз? (да/нет): ");
+                string answer = Console.ReadLine();
+
+                if (answer.ToLower() != "да")
+                {
+                    playAgain = false; 
+                    Console.WriteLine($"Правильный ответ был {secretNumber}");
+                }
+            }
+        }
+    }
+}
+ 
+2 зад дату своего рождения
+using System;
+
+public class AgeCalculator
+{
+    public static void Main(string[] args)
+    {
+        Console.Write("Введите дату вашего рождения (в формате ДД.ММ.ГГГГ): ");
+        string input = Console.ReadLine();
+
+        if (DateTime.TryParseExact(input, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime birthDate))
+        {
+            DateTime currentDate = DateTime.Now;
+
+            int years = currentDate.Year - birthDate.Year;
+            int months = currentDate.Month - birthDate.Month;
+            int days = currentDate.Day - birthDate.Day;
+
+            if (months < 0 || (months == 0 && days < 0))
+            {
+                years--;
+                months += 12;
+            }
+            if (days < 0)
+            {
+                months--;
+                days += DateTime.DaysInMonth(birthDate.Year + years, birthDate.Month); // Получаем кол-во дней в предыдущем месяце
+            }
+            Console.WriteLine($"Вам полных: {years} лет, {months} месяцев, {days} дней.");
+        }
+        else
+        {
+            Console.WriteLine("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ.");
+        }
+    }
+}
+5 задание строку в формат camelCase, то есть первая буква во всех словах должна быть заглавной, а пробелы должны быть удалены.
+using System;
+using System.IO;
+using System.Linq;
+
+public class CamelCaseConverter
+{
+    public static string ToCamelCase(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return input;
+
+        return string.Join("", input.Split(' ').Select(word => char.ToUpper(word[0]) + word.Substring(1).ToLower()));
+    }
+
+    public static void Main(string[] args)
+    {
+        Console.Write("Введите строку: ");
+        string input = Console.ReadLine();
+
+        string camelCase = ToCamelCase(input);
+        Console.WriteLine($"Результат: {camelCase}");
+
+        Console.Write("Сохранить в файл (да/нет)? ");
+        if (Console.ReadLine().ToLower() == "да")
+        {
+            Console.Write("Имя файла: ");
+            string fileName = Console.ReadLine();
+            File.WriteAllText(fileName, camelCase);
+            Console.WriteLine("Сохранено!");
+        }
+    }
+}
+
+8 зад: принимает массив из 10 целых чисел телефон
+using System;
+using System.Linq;
+public class PhoneNumber
+{
+    public static string CreatePhoneNumber(int[] numbers)
+    {
+        if (numbers == null || numbers.Length != 10 || numbers.Any(n => n < 0 || n > 9))
+        {
+            throw new ArgumentException("Массив должен содержать 10 чисел от 0 до 9.");
+        }
+        return $"({numbers[0]}{numbers[1]}{numbers[2]}) {numbers[3]}{numbers[4]}{numbers[5]}-{numbers[6]}{numbers[7]}-{numbers[8]}{numbers[9]}";
+    }
+
+    public static void Main(string[] args)
+    {
+        int[] validNumbers = { 9, 2, 3, 5, 5, 6, 7, 8, 9, 0 };
+        string phoneNumber = CreatePhoneNumber(validNumbers);
+        Console.WriteLine(phoneNumber);
+    }
+}
+
+# с его цифрами в порядке убывания.
+using System;
+using System.Linq;
+
+public class Kata
+{
+    public static int DescendingOrder(int num)
+    {
+        string numStr = num.ToString();
+        char[] digits = numStr.ToCharArray();
+        Array.Sort(digits);
+        Array.Reverse(digits);
+        string sortedNumStr = new string(digits);
+        return int.Parse(sortedNumStr);
+    }
+
+    public static void Main(string[] args)
+    {
+        Console.WriteLine(DescendingOrder(48432145));
+    }
+}
+
