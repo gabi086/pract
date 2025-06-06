@@ -1,0 +1,278 @@
+Форма авторизации
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Configuration;
+using System.Data.SqlClient;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Button;
+using System.Runtime.Remoting.Messaging;
+
+namespace demo
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+            passwordTextBox.UseSystemPasswordChar = true; // Скрытие пароля
+        }
+
+        public void button1_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection con = new SqlConnection(@"Data Source=gabrielka228; Initial Catalog=demo1; Integrated Security=True"))
+            {
+                con.Open();
+
+                // Проверка на пустые поля
+                if (string.IsNullOrWhiteSpace(loginTextBox.Text) || string.IsNullOrWhiteSpace(passwordTextBox.Text))
+                {
+                    MessageBox.Show("Введите логин и пароль", "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // SQL-запрос для проверки логина и пароля
+                SqlCommand command = new SqlCommand("SELECT user_role, user_id FROM users WHERE login=@login AND passwrd=@passwrd", con);
+                command.Parameters.Add("@login", SqlDbType.VarChar).Value = loginTextBox.Text.Trim();
+                command.Parameters.Add("@passwrd", SqlDbType.VarChar).Value = passwordTextBox.Text.Trim();
+
+                using (SqlDataReader authread = command.ExecuteReader())
+                {
+                    if (authread.Read())
+                    {
+                        string role = authread["user_role"].ToString();
+                        int userId = (int)authread["user_id"]; // Получение user_id
+
+                        MessageBox.Show("Вы вошли как " + role, "Успешно", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // Открытие соответствующей формы в зависимости от роли
+                        if (role == "student")
+                        {
+                            StudentForm studentForm = new StudentForm(userId); // Передача user_id
+                            studentForm.Show();
+                            this.Hide();
+                        }
+                        else if (role == "teacher")
+                        {
+                            TeacherForm teacherForm = new TeacherForm(userId); // Передача user_id
+                            teacherForm.Show();
+                            this.Hide();
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Неверный логин или пароль.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+                passwordTextBox.UseSystemPasswordChar = !checkBox1.Checked;  
+        }
+    }
+}
+    
+Форма препод
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Button;
+using System.Configuration.Provider;
+using System.Configuration;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar;
+using System.Collections;
+namespace demo
+{
+    public partial class TeacherForm : Form
+    {
+        private int userId;
+
+        public object gradesDataGridView { get; private set; }
+
+        public TeacherForm(int userId)
+        {
+            InitializeComponent();
+            this.userId = userId;
+
+        }
+
+        private void TeacherForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void TeacherForm_Load(object sender, EventArgs e)
+        {
+            LoadStudentGradesByUserId(userId);
+            LoadStudentInfoByUserId(userId);
+            LoadStudentGradesByUserId3(userId);
+        }
+        private void LoadStudentGradesByUserId(int userId)
+        {
+            using (SqlConnection con = new SqlConnection(@"Data Source=gabrielka228; Initial Catalog=demo1; Integrated Security=True"))
+            {
+                con.Open();
+
+                // Получаем id_препод по user_id
+                int studentId;
+                string prepodQuery = "SELECT Номер_преподавателя FROM Преподаватель WHERE user_id = @userId";
+                using (SqlCommand prepodCommand = new SqlCommand(prepodQuery, con))
+                {
+                    prepodCommand.Parameters.AddWithValue("@userId", userId);
+                    object result = prepodCommand.ExecuteScalar();
+                    if (result != null)
+                    {
+                        studentId = (int)result;
+                    }
+                    else
+                    {
+                        MessageBox.Show("преп не найден.");
+                        return;
+                    }
+                }
+            }
+        }
+        private void LoadStudentInfoByUserId(int userId)
+        {
+            using (SqlConnection con = new SqlConnection(@"Data Source=gabrielka228; Initial Catalog=demo1; Integrated Security=True"))
+            {
+                con.Open();
+                string prepodQuery = "SELECT Фамилия, Имя, Отчество FROM Преподаватель WHERE user_id = @userId";
+                using (SqlCommand prepodCommand = new SqlCommand(prepodQuery, con))
+                {
+                    prepodCommand.Parameters.AddWithValue("@userId", userId);
+                    using (SqlDataReader reader = prepodCommand.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string lastName = reader["Фамилия"].ToString();
+                            string firstName = reader["Имя"].ToString();
+                            string patronymic = reader["Отчество"].ToString();
+                            label1.Text = $"{lastName} {firstName} {patronymic}";
+                        }
+                        else
+                        {
+                            label1.Text = "Преподаватель не найден.";
+                        }
+                    }
+                }
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection(@"Data Source= gabrielka228; Initial Catalog = demo1; Integrated Security = True");
+            con.Open();
+            SqlCommand cmd = new SqlCommand("INSERT INTO  [Оценки] ( Код_дисциплины,Название_дисциплины, Номер_студента, Оценка) VALUES ( @Код_дисциплины, @Название_дисциплины, @Номер_студента, @Оценка)");
+            cmd.Connection = con;
+            cmd.Parameters.AddWithValue("Код_дисциплины", comboBox1.Text);
+            cmd.Parameters.AddWithValue("Название_дисциплины", comboBox1.Text);
+            cmd.Parameters.AddWithValue("Номер_студента", textBox2.Text);
+            cmd.Parameters.AddWithValue("Оценка", textBox1.Text);
+            SqlDataReader authread = cmd.ExecuteReader();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            Form form = new TeacherForm(userId);
+            form.Show();
+        }
+
+        private void LoadStudentGradesByUserId3(int userId) //выявление определенных дисциплин авторизов.пользователя
+        {
+            using (SqlConnection con = new SqlConnection(@"Data Source=gabrielka228; Initial Catalog=demo1; Integrated Security=True"))
+            {
+                con.Open();
+
+                int prepodId;
+                string studentQuery = "SELECT Номер_преподавателя FROM Преподаватель WHERE user_id = @userId";
+                using (SqlCommand prepodCommand = new SqlCommand(studentQuery, con))
+                {
+                    prepodCommand.Parameters.AddWithValue("@userId", userId);
+                    object result = prepodCommand.ExecuteScalar();
+                    if (result != null)
+                    {
+                        prepodId = (int)result;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Препод не найден.");
+                        return;
+                    }
+                }
+                string gradesQuery = "SELECT Код_дисциплины, Название FROM Дисциплина WHERE user_id = @userId";
+                using (SqlCommand gradesCommand = new SqlCommand(gradesQuery, con))
+                {
+                    gradesCommand.Parameters.AddWithValue("@userId", prepodId);
+                    SqlDataAdapter adapter = new SqlDataAdapter(gradesCommand);
+                    DataTable gradesTable = new DataTable();
+                    adapter.Fill(gradesTable);
+                    dataGridView1.DataSource = gradesTable; // Привязка данных к DataGridView
+                }
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection(@"Data Source= gabrielka228; Initial Catalog = demo1; Integrated Security = True");
+            con.Open();
+
+            SqlCommand cmd = new SqlCommand(@"SELECT Номер_студента, Оценка FROM Оценки WHERE Номер_студента = '" + textBox2.Text + "'", con);
+            SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+            DataSet ds = new DataSet();
+            adapter.Fill(ds, "Оценки");
+            dataGridView2.DataSource = ds.Tables[0];
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection(@"Data Source= gabrielka228; Initial Catalog = demo1; Integrated Security = True");
+            con.Open();
+            string query = "UPDATE [Оценки] SET Код_дисциплины = @Код_дисциплины, Оценка = @Оценка   WHERE Номер_студента = @Номер_студента";
+            using (SqlCommand cmd = new SqlCommand(query, con))
+            {
+                cmd.Parameters.AddWithValue("@Код_дисциплины", comboBox1.Text);
+                cmd.Parameters.AddWithValue("@Оценка", textBox1.Text);
+                cmd.Parameters.AddWithValue("@Номер_студента", textBox2.Text);
+                int result = cmd.ExecuteNonQuery();
+
+                if (result > 0)
+                {
+                    MessageBox.Show("Данные успешно обновлены", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Ошибка при обновлении данных или запись не найдена", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection(@"Data Source= gabrielka228; Initial Catalog = demo1; Integrated Security = True");
+            con.Open();
+            string query = "Delete [lekarstvo]  WHERE id = @id";
+            using (SqlCommand cmd = new SqlCommand(query, con))
+            {
+                cmd.Parameters.AddWithValue("@id", textBox2.Text);
+            }
+        }
+    }
+}
